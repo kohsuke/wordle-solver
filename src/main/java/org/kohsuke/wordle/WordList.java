@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Read only immutable list of words.
@@ -65,12 +66,16 @@ public class WordList implements Iterable<String> {
     }
 
     public WordList join(WordList that) {
-        var words = new HashSet<String>(this.words);
+        var words = new HashSet<>(this.words);
         words.addAll(that.words);
         return new WordList(words);
     }
 
     public boolean contains(String w) {
         return words.contains(w);
+    }
+
+    public Stream<String> stream() {
+        return words.stream();
     }
 }
