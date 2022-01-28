@@ -1,10 +1,9 @@
 package org.kohsuke.wordle;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -33,14 +32,40 @@ public class GameState {
         this.options = options;
     }
 
+    private static class Score implements Comparable<Score> {
+        /**
+         * Word considered as the next guess.
+         */
+        final String option;
+        /**
+         * Expected size of the candidates in the next round.
+         */
+        final int expectedSize;
+        /**
+         * True if {@link #option} is also a member of {@link #candidates}, meaning
+         * this could end the game.
+         */
+        final boolean alsoCandidate;
+
+        public Score(String option, int expectedSize, boolean alsoCandidate) {
+            this.option = option;
+            this.expectedSize = expectedSize;
+            this.alsoCandidate = alsoCandidate;
+        }
+
+        @Override
+        public int compareTo(Score that) {
+            int diff = Integer.compare(this.expectedSize, that.expectedSize);   // smaller the better
+            if (diff==0) diff = -Boolean.compare(this.alsoCandidate, that.alsoCandidate); // true is better
+            return diff;
+        }
+    }
+
     /**
      * Figure out the best guess to attempt next.
      */
     public String chooseNextGuess() {
-        String bestOption = null;
-        int bestExpectedSize = Integer.MAX_VALUE;
-
-        for (String o : options) {
+        return options.stream().parallel().map( o -> {
             /*
                 The goal here is to narrow down the size of candidates as quickly as possible.
 
@@ -63,31 +88,18 @@ public class GameState {
              */
             var clusterSizes = new HashMap<List<Hint>, AtomicInteger>();
 
-            for (String c :  candidates) {
+            for (String c : candidates) {
                 var h = Hint.make(c, o);
                 clusterSizes.computeIfAbsent(h, key -> new AtomicInteger(0)).incrementAndGet(); // just incrementing
             }
 
             int expectedSize = 0;
             for (var size : clusterSizes.values()) {
-                expectedSize += size.get()*size.get();
+                expectedSize += size.get() * size.get();
             }
 
-            int diff = expectedSize - bestExpectedSize;
-
-            if (diff==0) {
-                // tie breaker: prefer a word in candidates since that can end the game
-                if (candidates.contains(o))
-                    diff = -1;
-            }
-
-            if (diff<0) {
-                bestExpectedSize = expectedSize;
-                bestOption = o;
-            }
-        }
-
-        return bestOption;
+            return new Score(o, expectedSize, candidates.contains(o));
+        }).min(Comparator.naturalOrder()).get().option;
     }
 
     /**

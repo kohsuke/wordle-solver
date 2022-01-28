@@ -20,6 +20,8 @@ public class App {
 
     public static void main(String[] args) {
         computeAverage();
+        // average 3.481210
+//        solve("mount");
     }
 
     /**
@@ -31,7 +33,7 @@ public class App {
             GameState g = INITIAL_GAME;
             var guess = firstGuess; // this is the most time consuming step so let's cache that.
 
-            for (int i=1; i<10; i++) {
+            for (int i=1; i<=6; i++) {
                 var hints = Hint.make(answer, guess);
 
                 if (guess.equals(answer))

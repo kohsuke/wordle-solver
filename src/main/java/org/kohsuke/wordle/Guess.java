@@ -1,9 +1,6 @@
 package org.kohsuke.wordle;
 
-import java.util.ArrayList;
 import java.util.List;
-
-import static org.kohsuke.wordle.Hint.*;
 
 /**
  * A word that was tried and matches given to it.
