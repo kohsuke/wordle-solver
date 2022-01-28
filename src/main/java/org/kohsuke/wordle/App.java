@@ -5,16 +5,18 @@ import java.util.Collections;
 
 public class App {
     public static void main(String[] args) throws IOException {
-        String answer = "perky";
+        String answer = "mount";
 
+        var answers = WordList.fromResource("answers.txt");
         GameState g = new GameState(Collections.emptyList(),
-            WordList.fromResource("answers.txt"),
-            WordList.fromResource("guesses.txt"));
+            answers,
+            WordList.fromResource("guesses.txt").join(answers));
 
-        while (true) {
+        for (int i=0; i<5; i++) {
             var guess = g.chooseNextGuess();
             var hints = Hint.make(answer, guess);
 
+            System.out.printf("Candidates: %d, such as %s%n", g.candidates.size(), g.candidates.sample(5));
             System.out.printf("%s -> %s%n",guess, Hint.print(hints));
 
             if (guess.equals(answer))

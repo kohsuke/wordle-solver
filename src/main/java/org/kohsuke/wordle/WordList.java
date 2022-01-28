@@ -3,8 +3,10 @@ package org.kohsuke.wordle;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -46,5 +48,29 @@ public class WordList implements Iterable<String> {
             }
             return new WordList(words);
         }
+    }
+
+    public int size() {
+        return words.size();
+    }
+
+    public List<String> sample(int upTo) {
+        var sample = new ArrayList<String>(upTo);
+        for (String w : words) {
+            sample.add(w);
+            if (sample.size()==upTo)
+                break;
+        }
+        return sample;
+    }
+
+    public WordList join(WordList that) {
+        var words = new HashSet<String>(this.words);
+        words.addAll(that.words);
+        return new WordList(words);
+    }
+
+    public boolean contains(String w) {
+        return words.contains(w);
     }
 }

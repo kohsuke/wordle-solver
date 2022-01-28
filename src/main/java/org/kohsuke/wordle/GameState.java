@@ -73,7 +73,15 @@ public class GameState {
                 expectedSize += size.get()*size.get();
             }
 
-            if (expectedSize<bestExpectedSize) {
+            int diff = expectedSize - bestExpectedSize;
+
+            if (diff==0) {
+                // tie breaker: prefer a word in candidates since that can end the game
+                if (candidates.contains(o))
+                    diff = -1;
+            }
+
+            if (diff<0) {
                 bestExpectedSize = expectedSize;
                 bestOption = o;
             }

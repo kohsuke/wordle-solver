@@ -18,7 +18,7 @@ public enum Hint {
     /**
      * Invalid character.
      */
-    GREY(' ');
+    GREY('.');
 
     final char letter;
 
