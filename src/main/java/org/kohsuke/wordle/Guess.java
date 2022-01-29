@@ -18,6 +18,10 @@ public class Guess {
         this.hints = hints;
     }
 
+    public Guess(String guess, String answer) {
+        this(guess,Hint.make(answer,guess));
+    }
+
     /**
      * True if the given string could be a valid answer consistent with this hint.
      */

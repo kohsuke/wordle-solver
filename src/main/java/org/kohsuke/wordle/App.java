@@ -1,7 +1,10 @@
 package org.kohsuke.wordle;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Collections;
+import java.util.List;
 
 public class App {
     private static final WordList ANSWERS;
@@ -19,9 +22,11 @@ public class App {
     }
 
     public static void main(String[] args) {
-        computeAverage();
+        play();
+//        computeAverage();
         // average 3.481210
-//        solve("mount");
+
+//        solve("perky");
     }
 
     /**
@@ -49,7 +54,35 @@ public class App {
     }
 
     /**
-     * Given the correct answer, solve the game.
+     * Interactive play mode to solve the puzzle.
+     */
+    private static void play() {
+        var r = new BufferedReader(new InputStreamReader(System.in));
+
+        GameState g = INITIAL_GAME;
+        for (int i=0; i<6; i++) {
+            System.out.printf("Candidates: %d, such as %s%n", g.candidates.size(), g.candidates.sample(5));
+            var guess = g.chooseNextGuess();
+            System.out.printf("Guess: %s%n",guess);
+
+            List<Hint> hints;
+            while (true) {
+                try {
+                    System.out.print("Hint: ");
+                    hints = Hint.parse(r.readLine());
+                    break;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    // continue
+                }
+            }
+
+            g = g.nextState(new Guess(guess,hints));
+        }
+    }
+
+    /**
+     * Given the correct answer, see how the solver solves this puzzle.
      */
     public static void solve(String answer) {
         GameState g = INITIAL_GAME;

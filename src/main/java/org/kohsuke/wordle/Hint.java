@@ -1,5 +1,6 @@
 package org.kohsuke.wordle;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,5 +64,25 @@ public enum Hint {
             s.append(h.letter);
         }
         return s.toString();
+    }
+
+    /**
+     * Reverse of {@link #print(List)}
+     */
+    public static List<Hint> parse(String s) throws ParseException {
+        var results = new ArrayList<Hint>(s.length());
+
+        OUTER:
+        for (int i=0; i<s.length(); i++) {
+            char ch = s.charAt(i);
+            for (Hint h : values()) {
+                if (ch==h.letter) {
+                    results.add(h);
+                    continue OUTER;
+                }
+            }
+            throw new ParseException("Unable to parse: "+s, i);
+        }
+        return results;
     }
 }
