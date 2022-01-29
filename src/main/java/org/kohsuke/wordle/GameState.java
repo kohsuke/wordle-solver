@@ -89,6 +89,9 @@ public class GameState {
             var clusterSizes = new HashMap<List<Hint>, AtomicInteger>();
 
             for (String c : candidates) {
+                // c==o creates a cluster of size 1, but in that case the game ends, so really it'll create a cluster of zero.
+                if (c.equals(o))    continue;
+
                 var h = Hint.make(c, o);
                 clusterSizes.computeIfAbsent(h, key -> new AtomicInteger(0)).incrementAndGet(); // just incrementing
             }
