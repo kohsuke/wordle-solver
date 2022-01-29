@@ -41,23 +41,16 @@ public class GameState {
          * Expected size of the candidates in the next round.
          */
         final int expectedSize;
-        /**
-         * True if {@link #option} is also a member of {@link #candidates}, meaning
-         * this could end the game.
-         */
-        final boolean alsoCandidate;
 
-        public Score(String option, int expectedSize, boolean alsoCandidate) {
+        public Score(String option, int expectedSize) {
             this.option = option;
             this.expectedSize = expectedSize;
-            this.alsoCandidate = alsoCandidate;
         }
 
         @Override
         public int compareTo(Score that) {
-            int diff = Integer.compare(this.expectedSize, that.expectedSize);   // smaller the better
-            if (diff==0) diff = -Boolean.compare(this.alsoCandidate, that.alsoCandidate); // true is better
-            return diff;
+            // smaller the better
+            return Integer.compare(this.expectedSize, that.expectedSize);
         }
     }
 
@@ -101,7 +94,7 @@ public class GameState {
                 expectedSize += size.get() * size.get();
             }
 
-            return new Score(o, expectedSize, candidates.contains(o));
+            return new Score(o, expectedSize);
         }).min(Comparator.naturalOrder()).get().option;
     }
 
