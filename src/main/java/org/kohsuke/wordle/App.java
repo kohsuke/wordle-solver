@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class App {
     private static final WordList ANSWERS;
@@ -22,8 +23,8 @@ public class App {
     }
 
     public static void main(String[] args) {
-        play();
-//        computeAverage();
+//        play();
+        computeAverage();
         // average 3.481210
 
 //        solve("perky");
@@ -33,24 +34,37 @@ public class App {
      * Compute the average number of guesses across all the possible answers.
      */
     private static void computeAverage() {
+        var frequencies = new AtomicInteger[7];
+        for (int i=1; i<=6; i++)
+            frequencies[i] = new AtomicInteger(0);
+
         var firstGuess = INITIAL_GAME.chooseNextGuess();
-        var average = ANSWERS.stream().parallel().mapToDouble(answer -> {
+        ANSWERS.stream().parallel().forEach(answer -> {
             GameState g = INITIAL_GAME;
             var guess = firstGuess; // this is the most time consuming step so let's cache that.
 
             for (int i=1; i<=6; i++) {
                 var hints = Hint.make(answer, guess);
 
-                if (guess.equals(answer))
-                    return i;
+                if (guess.equals(answer)) {
+                    frequencies[i].incrementAndGet();
+                    return;
+                }
 
                 g = g.nextState(new Guess(guess,hints));
                 guess = g.chooseNextGuess();
             }
             throw new AssertionError("Couldn't solve: "+answer);
-        }).average().getAsDouble();
+        });
 
-        System.out.printf("Expected to solve this puzzle in %f guesses%n", average);
+        int sum=0;
+        for (int i=1; i<=6; i++) {
+            var f = frequencies[i].get();
+            System.out.printf("%d guesses: %d%n", i, f);
+            sum += f*i;
+        }
+
+        System.out.printf("Average in %f guesses%n", ((double)sum)/ANSWERS.size());
     }
 
     /**
