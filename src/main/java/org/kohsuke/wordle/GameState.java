@@ -1,10 +1,13 @@
 package org.kohsuke.wordle;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * Current game state, which consists of ...
@@ -32,7 +35,7 @@ public class GameState {
         this.options = options;
     }
 
-    private static class Score implements Comparable<Score> {
+    public static class Score implements Comparable<Score> {
         /**
          * Word considered as the next guess.
          */
@@ -42,15 +45,40 @@ public class GameState {
          */
         final int expectedSize;
 
-        public Score(String option, int expectedSize) {
+        final Map<List<Hint>, Integer> clusterSizes;
+
+        private Score(String option, Map<List<Hint>, Integer> clusterSizes) {
             this.option = option;
-            this.expectedSize = expectedSize;
+            this.clusterSizes = clusterSizes;
+
+            int sz = 0;
+            for (var size : clusterSizes.values()) {
+                sz += size * size;
+            }
+            this.expectedSize = sz;
         }
 
         @Override
         public int compareTo(Score that) {
             // smaller the better
             return Integer.compare(this.expectedSize, that.expectedSize);
+        }
+
+        /**
+         * What is the worst outcome of choosing this option?
+         */
+        public List<Hint> worst() {
+            return clusterSizes.entrySet().stream().max(Comparator.comparing(Map.Entry::getValue)).get().getKey();
+        }
+
+        @Override
+        public String toString() {
+            var clusters = clusterSizes.entrySet().stream()
+                .sorted(Comparator.comparing(x -> -x.getValue()))
+                .map(x -> String.format("%d:%s", x.getValue(), Hint.print(x.getKey())))
+                .collect(Collectors.joining(","));
+
+            return String.format("guess:%s -> expectedSizes:%d (%s)", option, expectedSize, clusters);
         }
     }
 
@@ -85,22 +113,17 @@ public class GameState {
         for each hint h
 
      */
-        var clusterSizes = new HashMap<List<Hint>, AtomicInteger>();
+        var clusterSizes = new HashMap<List<Hint>, Integer>();
 
         for (String c : candidates) {
             // c==o creates a cluster of size 1, but in that case the game ends, so really it'll create a cluster of zero.
             if (c.equals(guess))    continue;
 
             var h = Hint.make(c, guess);
-            clusterSizes.computeIfAbsent(h, key -> new AtomicInteger(0)).incrementAndGet(); // just incrementing
+            clusterSizes.merge(h, 1, Integer::sum);
         }
 
-        int expectedSize = 0;
-        for (var size : clusterSizes.values()) {
-            expectedSize += size.get() * size.get();
-        }
-
-        return new Score(guess, expectedSize);
+        return new Score(guess, clusterSizes);
     }
 
     /**
@@ -113,5 +136,10 @@ public class GameState {
         return new GameState(ng,
             candidates.select(guess::isConsistentWith),
             options);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Candidates: %d, such as %s%n", candidates.size(), candidates.sample(5));
     }
 }

@@ -3,6 +3,7 @@ package org.kohsuke.wordle;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.ParseException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -22,12 +23,28 @@ public class App {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ParseException {
 //        play();
-        computeAverage();
+//        computeAverage();
         // average 3.481210
 
 //        solve("perky");
+
+        {// comparing two different moves
+            var g = INITIAL_GAME.nextState(new Guess("roate", "light"));
+            System.out.printf("Current candidates: %d%n", g.candidates.size());
+            assessGuess(g, "glyph");
+            assessGuess(g, "shunt");
+        }
+    }
+
+    /**
+     * At the given game state, compare the impact of choosing two different guesses
+     */
+    private static void assessGuess(GameState g, String guess) {
+        var s = g.score(guess);
+        System.out.println(s);
+        System.out.printf("Worst case: %s%n", g.nextState(new Guess(guess,s.worst())));
     }
 
     /**
@@ -104,7 +121,7 @@ public class App {
             var guess = g.chooseNextGuess();
             var hints = Hint.make(answer, guess);
 
-            System.out.printf("Candidates: %d, such as %s%n", g.candidates.size(), g.candidates.sample(5));
+            System.out.println(g);
             System.out.printf("%s -> %s%n",guess, Hint.print(hints));
 
             if (guess.equals(answer))

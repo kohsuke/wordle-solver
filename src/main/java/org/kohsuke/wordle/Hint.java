@@ -11,20 +11,29 @@ public enum Hint {
     /**
      * Position and the character matched.
      */
-    GREEN('*'),
+    GREEN('*',"\uD83D\uDFE9"),
     /**
      * Character matched but not the position.
      */
-    YELLOW('-'),
+    YELLOW('-',"\uD83D\uDFE8"),
     /**
      * Invalid character.
      */
-    GREY('.');
+    GREY('.',"⬜");
 
+    /**
+     * ASCII version of this hint for easier parsing
+     */
     final char letter;
 
-    Hint(char letter) {
+    /**
+     * String that renders to a colored box.
+     */
+    final String box;
+
+    Hint(char letter, String box) {
         this.letter = letter;
+        this.box = box;
     }
 
     static List<Hint> make(String answer, String guess) {
@@ -61,7 +70,7 @@ public enum Hint {
     public static String print(List<Hint> hints) {
         var s = new StringBuilder(hints.size());
         for (Hint h : hints) {
-            s.append(h.letter);
+            s.append(h.box);
         }
         return s.toString();
     }
