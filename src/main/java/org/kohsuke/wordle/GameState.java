@@ -58,44 +58,49 @@ public class GameState {
      * Figure out the best guess to attempt next.
      */
     public String chooseNextGuess() {
-        return options.stream().parallel().map( o -> {
-            /*
-                The goal here is to narrow down the size of candidates as quickly as possible.
+        return options.stream().parallel().map(this::score).min(Comparator.naturalOrder()).get().option;
+    }
 
-                when we try an option 'o', candidates would produce hints, but some candidates
-                may produce identical hints. So the expected size of the next round of candidates is
+    /**
+     * Compute the score of the proposed guess.
+     */
+    public Score score(String guess) {
+    /*
+        The goal here is to narrow down the size of candidates as quickly as possible.
 
-                    Sum          { Probability of 'h' happening (Ph) * Size of candidates that are consistent with 'h' (Sh) }
-                for each hint h
+        when we try an option 'o', candidates would produce hints, but some candidates
+        may produce identical hints. So the expected size of the next round of candidates is
 
-                Assuming all candidates are equally likely, Ph = Sh / Size of all candidates.
-                Since we are just going to compare the expected size of the next round of candidates for each 'o'
-                and pick the best one, the "Size of all candidates" part is a constant that multiplier that can be ignored.
+            Sum          { Probability of 'h' happening (Ph) * Size of candidates that are consistent with 'h' (Sh) }
+        for each hint h
 
-                Thus, this basically boils down to grouping clusters by the hint they produce against 'o',
-                and comparing their score:
+        Assuming all candidates are equally likely, Ph = Sh / Size of all candidates.
+        Since we are just going to compare the expected size of the next round of candidates for each 'o'
+        and pick the best one, the "Size of all candidates" part is a constant that multiplier that can be ignored.
 
-                    Sum          Sh^2
-                for each hint h
+        Thus, this basically boils down to grouping clusters by the hint they produce against 'o',
+        and comparing their score:
 
-             */
-            var clusterSizes = new HashMap<List<Hint>, AtomicInteger>();
+            Sum          Sh^2
+        for each hint h
 
-            for (String c : candidates) {
-                // c==o creates a cluster of size 1, but in that case the game ends, so really it'll create a cluster of zero.
-                if (c.equals(o))    continue;
+     */
+        var clusterSizes = new HashMap<List<Hint>, AtomicInteger>();
 
-                var h = Hint.make(c, o);
-                clusterSizes.computeIfAbsent(h, key -> new AtomicInteger(0)).incrementAndGet(); // just incrementing
-            }
+        for (String c : candidates) {
+            // c==o creates a cluster of size 1, but in that case the game ends, so really it'll create a cluster of zero.
+            if (c.equals(guess))    continue;
 
-            int expectedSize = 0;
-            for (var size : clusterSizes.values()) {
-                expectedSize += size.get() * size.get();
-            }
+            var h = Hint.make(c, guess);
+            clusterSizes.computeIfAbsent(h, key -> new AtomicInteger(0)).incrementAndGet(); // just incrementing
+        }
 
-            return new Score(o, expectedSize);
-        }).min(Comparator.naturalOrder()).get().option;
+        int expectedSize = 0;
+        for (var size : clusterSizes.values()) {
+            expectedSize += size.get() * size.get();
+        }
+
+        return new Score(guess, expectedSize);
     }
 
     /**
