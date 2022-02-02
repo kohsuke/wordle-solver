@@ -24,18 +24,11 @@ public class App {
     }
 
     public static void main(String[] args) throws ParseException {
-//        play();
+        play();
 //        computeAverage();
         // average 3.481210
 
 //        solve("perky");
-
-        {// comparing two different moves
-            var g = INITIAL_GAME.nextState(new Guess("roate", "light"));
-            System.out.printf("Current candidates: %d%n", g.candidates.size());
-            assessGuess(g, "glyph");
-            assessGuess(g, "shunt");
-        }
     }
 
     /**
@@ -61,14 +54,14 @@ public class App {
             var guess = firstGuess; // this is the most time consuming step so let's cache that.
 
             for (int i=1; i<=6; i++) {
-                var hints = Hint.make(answer, guess);
+                var hints = Hint.make(answer, guess.word);
 
                 if (guess.equals(answer)) {
                     frequencies[i].incrementAndGet();
                     return;
                 }
 
-                g = g.nextState(new Guess(guess,hints));
+                g = g.nextState(new Guess(guess.word,hints));
                 guess = g.chooseNextGuess();
             }
             throw new AssertionError("Couldn't solve: "+answer);
@@ -108,7 +101,7 @@ public class App {
                 }
             }
 
-            g = g.nextState(new Guess(guess,hints));
+            g = g.nextState(new Guess(guess.word,hints));
         }
     }
 
@@ -119,7 +112,7 @@ public class App {
         GameState g = INITIAL_GAME;
         for (int i=0; i<6; i++) {
             var guess = g.chooseNextGuess();
-            var hints = Hint.make(answer, guess);
+            var hints = Hint.make(answer, guess.word);
 
             System.out.println(g);
             System.out.printf("%s -> %s%n",guess, Hint.print(hints));
@@ -127,7 +120,7 @@ public class App {
             if (guess.equals(answer))
                 return;
 
-            g = g.nextState(new Guess(guess,hints));
+            g = g.nextState(new Guess(guess.word,hints));
         }
     }
 }

@@ -1,12 +1,10 @@
 package org.kohsuke.wordle;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -35,11 +33,11 @@ public class GameState {
         this.options = options;
     }
 
-    public static class Score implements Comparable<Score> {
+    public class Score implements Comparable<Score> {
         /**
          * Word considered as the next guess.
          */
-        final String option;
+        final String word;
         /**
          * Expected size of the candidates in the next round.
          */
@@ -47,8 +45,8 @@ public class GameState {
 
         final Map<List<Hint>, Integer> clusterSizes;
 
-        private Score(String option, Map<List<Hint>, Integer> clusterSizes) {
-            this.option = option;
+        private Score(String word, Map<List<Hint>, Integer> clusterSizes) {
+            this.word = word;
             this.clusterSizes = clusterSizes;
 
             int sz = 0;
@@ -71,6 +69,10 @@ public class GameState {
             return clusterSizes.entrySet().stream().max(Comparator.comparing(Map.Entry::getValue)).get().getKey();
         }
 
+        public float expectedSize() {
+            return ((float)expectedSize)/candidates.size();
+        }
+
         @Override
         public String toString() {
             var clusters = clusterSizes.entrySet().stream()
@@ -78,15 +80,15 @@ public class GameState {
                 .map(x -> String.format("%d:%s", x.getValue(), Hint.print(x.getKey())))
                 .collect(Collectors.joining(","));
 
-            return String.format("guess:%s -> expectedSizes:%d (%s)", option, expectedSize, clusters);
+            return String.format("guess:%s -> expectedSizes:%f (%s)", word, expectedSize(), clusters);
         }
     }
 
     /**
      * Figure out the best guess to attempt next.
      */
-    public String chooseNextGuess() {
-        return options.stream().parallel().map(this::score).min(Comparator.naturalOrder()).get().option;
+    public Score chooseNextGuess() {
+        return options.stream().parallel().map(this::score).min(Comparator.naturalOrder()).get();
     }
 
     /**
