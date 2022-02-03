@@ -1,5 +1,7 @@
 package org.kohsuke.wordle;
 
+import org.kohsuke.wordle.GameState.Score;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -7,6 +9,7 @@ import java.text.ParseException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class App {
     private static final WordList ANSWERS;
@@ -24,11 +27,24 @@ public class App {
     }
 
     public static void main(String[] args) throws ParseException {
+//        firstPlayAnalysis();
+
         play();
 //        computeAverage();
         // average 3.481210
 
 //        solve("perky");
+    }
+
+    /**
+     * What first choice would yield good results?
+     */
+    private static void firstPlayAnalysis() {
+        var all = INITIAL_GAME.nextGuesses().collect(Collectors.toList());
+        all.subList(20,40).forEach(s -> {
+            System.out.println(s);
+            computeAverage(s);
+        });
     }
 
     /**
@@ -44,11 +60,14 @@ public class App {
      * Compute the average number of guesses across all the possible answers.
      */
     private static void computeAverage() {
+        computeAverage(INITIAL_GAME.chooseNextGuess());
+    }
+
+    private static void computeAverage(GameState.Score firstGuess) {
         var frequencies = new AtomicInteger[7];
         for (int i=1; i<=6; i++)
             frequencies[i] = new AtomicInteger(0);
 
-        var firstGuess = INITIAL_GAME.chooseNextGuess();
         ANSWERS.stream().parallel().forEach(answer -> {
             GameState g = INITIAL_GAME;
             var guess = firstGuess; // this is the most time consuming step so let's cache that.
@@ -56,7 +75,7 @@ public class App {
             for (int i=1; i<=6; i++) {
                 var hints = Hint.make(answer, guess.word);
 
-                if (guess.equals(answer)) {
+                if (guess.is(answer)) {
                     frequencies[i].incrementAndGet();
                     return;
                 }
@@ -64,7 +83,7 @@ public class App {
                 g = g.nextState(new Guess(guess.word,hints));
                 guess = g.chooseNextGuess();
             }
-            throw new AssertionError("Couldn't solve: "+answer);
+            throw new AssertionError("Couldn't solve: "+answer+"\n"+g);
         });
 
         int sum=0;
@@ -86,7 +105,7 @@ public class App {
         GameState g = INITIAL_GAME;
         for (int i=0; i<6; i++) {
             System.out.printf("Candidates: %d, such as %s%n", g.candidates.size(), g.candidates.sample(5));
-            var guess = g.chooseNextGuess();
+            var guess = i==0 ? g.score("salet") : g.chooseNextGuess();
             System.out.printf("Guess: %s%n",guess);
 
             List<Hint> hints;

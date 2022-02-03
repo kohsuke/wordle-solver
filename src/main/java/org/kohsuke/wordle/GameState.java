@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Current game state, which consists of ...
@@ -82,13 +83,28 @@ public class GameState {
 
             return String.format("guess:%s -> expectedSizes:%f (%s)", word, expectedSize(), clusters);
         }
+
+        public boolean is(String answer) {
+            return word.equals(answer);
+        }
     }
 
     /**
      * Figure out the best guess to attempt next.
      */
     public Score chooseNextGuess() {
-        return options.stream().parallel().map(this::score).min(Comparator.naturalOrder()).get();
+        return scoreStream().min(Comparator.naturalOrder()).get();
+    }
+
+    /**
+     * Figure out the guesses from best to worst.
+     */
+    public Stream<Score> nextGuesses() {
+        return scoreStream().sorted().sequential();
+    }
+
+    private Stream<Score> scoreStream() {
+        return options.stream().parallel().map(this::score);
     }
 
     /**
