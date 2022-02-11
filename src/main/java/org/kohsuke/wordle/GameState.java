@@ -147,13 +147,13 @@ public class GameState {
     /**
      * Advance the game state to the next.
      */
-    public GameState nextState(Guess guess) {
+    public GameState nextState(Guess guess, boolean hardMode) {
         var ng = new ArrayList<>(guesses);
         ng.add(guess);
 
         return new GameState(ng,
             candidates.select(guess::isConsistentWith),
-            options);
+            hardMode ? options.select(guess::allowsInHardMode) : options);
     }
 
     @Override

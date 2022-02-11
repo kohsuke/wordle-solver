@@ -1,7 +1,5 @@
 package org.kohsuke.wordle;
 
-import org.kohsuke.wordle.GameState.Score;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -12,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class App {
+    private static final boolean HARD_MODE = true;
     private static final WordList ANSWERS;
     private static final WordList GUESSES;
     private static final GameState INITIAL_GAME;
@@ -53,7 +52,7 @@ public class App {
     private static void assessGuess(GameState g, String guess) {
         var s = g.score(guess);
         System.out.println(s);
-        System.out.printf("Worst case: %s%n", g.nextState(new Guess(guess,s.worst())));
+        System.out.printf("Worst case: %s%n", g.nextState(new Guess(guess,s.worst()),HARD_MODE));
     }
 
     /**
@@ -80,7 +79,7 @@ public class App {
                     return;
                 }
 
-                g = g.nextState(new Guess(guess.word,hints));
+                g = g.nextState(new Guess(guess.word,hints),HARD_MODE);
                 guess = g.chooseNextGuess();
             }
             throw new AssertionError("Couldn't solve: "+answer+"\n"+g);
@@ -120,7 +119,7 @@ public class App {
                 }
             }
 
-            g = g.nextState(new Guess(guess.word,hints));
+            g = g.nextState(new Guess(guess.word,hints),HARD_MODE);
         }
     }
 
@@ -139,7 +138,7 @@ public class App {
             if (guess.equals(answer))
                 return;
 
-            g = g.nextState(new Guess(guess.word,hints));
+            g = g.nextState(new Guess(guess.word,hints),HARD_MODE);
         }
     }
 }
