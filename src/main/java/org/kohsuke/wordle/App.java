@@ -28,8 +28,8 @@ public class App {
     public static void main(String[] args) throws ParseException {
 //        firstPlayAnalysis();
 
-        play();
-//        computeAverage();
+//        play();
+        computeAverage();
         // average 3.481210
 
 //        solve("perky");
@@ -59,19 +59,20 @@ public class App {
      * Compute the average number of guesses across all the possible answers.
      */
     private static void computeAverage() {
-        computeAverage(INITIAL_GAME.chooseNextGuess());
+        computeAverage(INITIAL_GAME.score("salet"));
     }
 
     private static void computeAverage(GameState.Score firstGuess) {
-        var frequencies = new AtomicInteger[7];
-        for (int i=1; i<=6; i++)
+        final int maxTurn = 8;  // game only allows up to 6 but in the hard mode the worst case is longer than that.
+        var frequencies = new AtomicInteger[maxTurn+1];
+        for (int i=1; i<=maxTurn; i++)
             frequencies[i] = new AtomicInteger(0);
 
         ANSWERS.stream().parallel().forEach(answer -> {
             GameState g = INITIAL_GAME;
             var guess = firstGuess; // this is the most time consuming step so let's cache that.
 
-            for (int i=1; i<=6; i++) {
+            for (int i=1; i<=maxTurn; i++) {
                 var hints = Hint.make(answer, guess.word);
 
                 if (guess.is(answer)) {
@@ -86,7 +87,7 @@ public class App {
         });
 
         int sum=0;
-        for (int i=1; i<=6; i++) {
+        for (int i=1; i<=maxTurn; i++) {
             var f = frequencies[i].get();
             System.out.printf("%d guesses: %d%n", i, f);
             sum += f*i;
